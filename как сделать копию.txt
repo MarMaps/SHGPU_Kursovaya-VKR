@@ -1,0 +1,5 @@
+в cmd: 
+сделать копию: "C:\Program Files\PostgreSQL\17\bin\pg_dump.exe" -h localhost -U postgres -W -f "C:\xampp\htdocs\bd\prokat.sql" -d FoodPlan --create
+
+восстановить копию: "C:\Program Files\PostgreSQL\17\bin\psql.exe" -h localhost -U postgres -W -f "C:\xampp\htdocs\bd\prokat2"
+
