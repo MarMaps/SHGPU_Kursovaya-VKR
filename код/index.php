@@ -15,21 +15,31 @@
             <label><input type="radio" name="gender" value="жен"> жен </label>
             <label><input type="radio" name="gender" value="муж"> муж </label> <br>
 
-            <label class="label" for="age">Возраст</label> <!--с прокруткой 1-110-->
-            <input class="area" type="text" name="age"> <br>
+            <label class="label" for="age">Возраст</label>
+            <input class="area" type="number" name="age" min="1" max="110" value="25"> <br>
 
-            <label class="label" for="weight">Вес</label> <!--с прокруткой 1-220-->
-            <input class="area" type="text" name="weight"> <br>
+            <label class="label" for="weight">Вес</label>
+            <input class="area" type="number" name="weight" min="1" max="220" value="70"> <br>
 
-            <label class="label" for="height">Рост</label> <!--с прокруткой 1-250-->
-            <input class="area" type="text" name="height"> <br>
+            <label class="label" for="height">Рост</label>
+            <input class="area" type="number" name="height" min="1" max="250" value="170"> <br>
+
             
-            <label class="label" for="physical_activity_level">Уровень физической активности(1-5)</label> <!--список 1-5 с описанием -->
-            <input class="area" type="text" name="physical_activity_level"> <br>
+            <label class="label" for="physical_activity_level">Уровень физической активности</label>
+            <select class="area" name="physical_activity_level" id="physical_activity_level">
+                <option value="1">1 - очень мало движения (сидячий образ жизни)</option>
+                <option value="2">2 - легкая активность (тренировки 1–2 раза в неделю)</option>
+                <option value="3">3 - умеренная активность (тренировки 3–4 раза в неделю)</option>
+                <option value="4">4 - высокая активность (тренировки почти каждый день)</option>
+                <option value="5">5 - экстремальная активность (тяжелая физическая работа/тяжелые тренировки)</option>
+            </select>
+            <br>
+
             <p></p>
 
             <input class="btn_dob" name='btn' type='submit' value='Рассчитать'>
             <p></p>
+            
         </form>
 
         <?php
@@ -60,14 +70,27 @@
                 }
 
                 switch ($physical_activity_level) {
-                    case 1: $calories *= 1.2; break;
-                    case 2: $calories *= 1.375; break; 
-                    case 3: $calories *= 1.55; break; 
-                    case 4: $calories *= 1.725; break;
-                    case 5: $calories *= 1.9; break; 
-                    // default: $calories *= 1.2; 
+                    case 1: 
+                        $calories *= 1.2; 
+                        $proteins = $weight * 1.6;
+                        break; //оч мало движения
+                    case 2: 
+                        $calories *= 1.375; 
+                        $proteins = $weight * 1.8;
+                        break; //легкая активность 1-2р в неделю
+                    case 3: 
+                        $calories *= 1.55; 
+                        $proteins = $weight * 2;
+                        break; //умеренная активность 3-4р в неделю
+                    case 4: 
+                        $calories *= 1.725; 
+                        $proteins = $weight * 2.2;
+                        break; //тренировки почти каждый день
+                    case 5: 
+                        $calories *= 1.9; 
+                        $proteins = $weight * 2.4;
+                        break; //интенс тренировки и физич работа
                 }
-                $proteins = (0.3 * $calories) / 4;
                 $fats = (0.3 * $calories) / 9;
                 $carbohydrates = (0.4 * $calories) / 4;
 
