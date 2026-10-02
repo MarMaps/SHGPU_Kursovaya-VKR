@@ -16,13 +16,13 @@
             <label><input type="radio" name="gender" value="муж"> муж </label> <br>
 
             <label class="label" for="age">Возраст</label>
-            <input class="area" type="number" name="age" min="1" max="110" value="25"> <br>
+            <input class="area" type="number" name="age" min="1" max="110" > <br>
 
             <label class="label" for="weight">Вес</label>
-            <input class="area" type="number" name="weight" min="1" max="220" value="70"> <br>
+            <input class="area" type="number" name="weight" min="1" max="220"> <br>
 
             <label class="label" for="height">Рост</label>
-            <input class="area" type="number" name="height" min="1" max="250" value="170"> <br>
+            <input class="area" type="number" name="height" min="1" max="250"> <br>
 
             
             <label class="label" for="physical_activity_level">Уровень физической активности</label>
@@ -55,12 +55,6 @@
         
             if ($weight != '' && $height != '') {
                 $calories = 0;
-                //$sql = "INSERT INTO avtomobili (marka, model, god_vypuska, moschnost, stoimost_za_chas, gos_nomer) 
-                //        VALUES ('$marka', '$model', '$god_vypuska', '$moschnost', '$stoimost_za_chas', '$gos_nomer')";
-                // $result = pg_query($con, $sql);        
-                //if ($result) {
-                    //print "<p>👍</p>";
-                //}
                 
                 //для ккал - формула Миффлина-Сен Жеора
                 if ($gender == 'жен') {
@@ -72,23 +66,23 @@
                 switch ($physical_activity_level) {
                     case 1: 
                         $calories *= 1.2; 
-                        $proteins = $weight * 1.6;
+                        $proteins = $weight * 1.4;
                         break; //оч мало движения
                     case 2: 
                         $calories *= 1.375; 
-                        $proteins = $weight * 1.8;
+                        $proteins = $weight * 1.6;
                         break; //легкая активность 1-2р в неделю
                     case 3: 
                         $calories *= 1.55; 
-                        $proteins = $weight * 2;
+                        $proteins = $weight * 1.8;
                         break; //умеренная активность 3-4р в неделю
                     case 4: 
                         $calories *= 1.725; 
-                        $proteins = $weight * 2.2;
+                        $proteins = $weight * 2;
                         break; //тренировки почти каждый день
                     case 5: 
                         $calories *= 1.9; 
-                        $proteins = $weight * 2.4;
+                        $proteins = $weight * 2.2;
                         break; //интенс тренировки и физич работа
                 }
                 $fats = (0.3 * $calories) / 9;
@@ -98,6 +92,40 @@
                 print("б = " . round($proteins) . "<br>");
                 print("ж = " . round($fats) . "<br>");                
                 print("у = " . round($carbohydrates) . "<br>");
+                
+                $breakfast_calories = $calories * 0.25;
+                print("ккал на завтрак = " . round($breakfast_calories) . "<br>");
+                $lunch_calories = $calories * 0.30;
+                $snack_calories = $calories * 0.15;
+                $dinner_calories = $calories * 0.30;
+
+                $breakfast_proteins = $proteins * 0.25;
+                $lunch_proteins = $proteins * 0.30;
+                $snack_proteins = $proteins * 0.15;
+                $dinner_proteins = $proteins * 0.30;
+                
+                //генерация завтрака
+                $target_calories = $breakfast_calories;
+                $target_proteins = $breakfast_proteins;
+
+                $sql = "SELECT dish, calories,proteins,fats,carbohydrates FROM dishes";
+                $result = pg_query($con, $sql);
+
+                while ($row = pg_fetch_assoc($result)) {
+                    $portion = ($target_calories / $row['calories']) * 100;
+                    if ($portion >= 150 && $portion <= 400) {
+                        $best_dish = $row;
+                        $best_portion = $portion;
+                        break; //выбралось первое попавшееся и дальше по таблице не идет(логика с откл999999)
+                    }
+                }
+
+                if ($best_dish != null) {
+                    print("<br> Завтрак <br>");
+                    print("Блюдо: " . $best_dish['dish'] . "<br>");
+                    print("Порция: " . round($best_portion) . " г<br>");
+                    print("Калории: " . round($target_calories) . " ккал<br>");
+                }
 
             }
         }
