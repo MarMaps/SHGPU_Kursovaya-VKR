@@ -80,6 +80,7 @@
 
             $week = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
             $meal_names = ['Завтрак', 'Обед', 'Перекус', 'Ужин'];
+            $meal_id = [1, 2, 5, 3];
             $meal_calories = [
                 $calories * 0.25, 
                 $calories * 0.30, 
@@ -87,7 +88,9 @@
                 $calories * 0.30  
             ];
 
-            $sql = "SELECT id, dish, calories, proteins, fats, carbohydrates FROM dishes";
+            //$sql = "SELECT id, dish, calories, proteins, fats, carbohydrates FROM dishes";
+            $sql = "select dishes.id, dish, calories, proteins, fats, carbohydrates, id_meal
+            from dishes join dishes_meal on dishes.id = dishes_meal.id_dish";
             $result = pg_query($con, $sql);
             $all_dishes = [];
             while ($row = pg_fetch_assoc($result)) {
@@ -95,15 +98,18 @@
             }
             $used_dishes = [];
 
-            function find_dish($dishes, $target_calories, $used_dishes) {
+            function find_dish($dishes, $target_calories, $used_dishes, $meal_id) {
                 $dishes_count = count($dishes);
                 for ($j = 0; $j < $dishes_count; $j++) {
                     $dish = $dishes[$j];
                     if (in_array($dish['id'], $used_dishes)) {
                         continue;
                     }
+                    if ($dish['id_meal'] != $meal_id) {
+                        continue;
+                    }
                     $portion = ($target_calories / $dish['calories']) * 100;
-                    if ($portion >= 150 && $portion <= 250) {
+                    if ($portion >= 150 && $portion <= 250) { //или 200
                         //return ['dish' => $dish, 'portion' => $portion];
                         return ['name' => $dish['dish'], 'id' => $dish['id'], 'portion' => $portion];
                     }
@@ -117,8 +123,9 @@
                 for ($i = 0; $i < 4; $i++) {
                     //$current_name = $meal_names[$i];
                     $current_calories = $meal_calories[$i];
+                    $current_meal_id = $meal_id[$i];
 
-                    $found = find_dish($all_dishes, $current_calories, $used_dishes);
+                    $found = find_dish($all_dishes, $current_calories, $used_dishes, $current_meal_id);
 
                     print($meal_names[$i] . "<br>");
                     print("Целевые ккал: " . round($current_calories) . "<br>");
