@@ -3,7 +3,16 @@ https://krichmar.ru/company/kalkulyator-kaloriy/ - онлайн расчет, ф
 https://wciom.ru/analytical-reviews/analiticheskii-obzor/zozh-2026 - опрос о ЗОЖ ВЦИОМ
 https://wciom.ru/analytical-reviews/analiticheskii-obzor/tradicionnye-cennosti-sovremennye-celi?utm_source=chatgpt.com
 https://wciom.ru/analytical-reviews/analiticheskii-obzor/eda-po-pravilam-i-bez
+https://wciom.ru/analytical-reviews/analiticheskii-obzor/v-zone-nevnimanija-kak-rossijane-sledjat-za-vesom-i-chto-upuskajut-iz-vidu
 
 https://health-diet.ru/table_calorie/ - справочник блюд,  нормативных таблиц химического состава и калорийности под редакцией И. М. Скурихина и В. А. Тутельяна
 https://health-diet.ru/base_of_meals/meals_21248/ - справочник напитков
 
+https://clinic-cvetkov.ru/company/kalkulyator-imt/ - для ИМТ
+https://www.who.int/ru/news-room/fact-sheets/detail/obesity-and-overweight
+
+https://www.who.int/ru/news-room/fact-sheets/detail/healthy-diet - 4 основных принципа здорового питания
+
+взятые аналоги: зожник, калоризатор, https://github.com/DhavalMCA/AI-Workout-Diet-Plan
+
+https://food.vkusvill.ru/trends/balance/metod-tarelki - для метода тарелки

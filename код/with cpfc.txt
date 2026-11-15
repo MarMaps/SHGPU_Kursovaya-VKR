@@ -1,0 +1,317 @@
+                $meal_calories = [
+                    $calories * 0.25, 
+                    $calories * 0.30, 
+                    $calories * 0.15, 
+                    $calories * 0.30  
+                ];
+                
+                // 1. Расчет целевых БЖУ для каждого приема пищи
+                $meal_proteins = [$proteins * 0.25, $proteins * 0.30, $proteins * 0.15, $proteins * 0.30];
+                $meal_fats = [$fats * 0.25, $fats * 0.30, $fats * 0.15, $fats * 0.30];
+                $meal_carbohydrates = [$carbohydrates * 0.25, $carbohydrates * 0.30, $carbohydrates * 0.15, $carbohydrates * 0.30];
+
+                $sql = "select dishes.id, dish, calories, proteins, fats, carbohydrates, id_meal
+                from dishes join dishes_meal on dishes.id = dishes_meal.id_dish";
+                $result = pg_query($con, $sql);
+                $all_dishes = [];
+                while ($row = pg_fetch_assoc($result)) {
+                    $all_dishes[] = $row;
+                }
+                
+                shuffle($all_dishes); // Перемешивание для разнообразия
+
+                $sql_rand = "select id, dish, calories, proteins, fats, carbohydrates from dishes";
+                $result_rand = pg_query($con, $sql_rand);
+                $random_dishes = [];
+                while ($row = pg_fetch_assoc($result_rand)) {
+                    $random_dishes[] = $row;
+                }
+                $used_dishes = [];
+
+                // 2. Функция поиска с проверкой калорий и ВСЕХ БЖУ
+                function find_dish($dishes, $target_cal, $target_prot, $target_fat, $target_carb, $used_dishes, $meal_id) {
+                    $dishes_count = count($dishes);
+                    for ($j = 0; $j < $dishes_count; $j++) {
+                        $dish = $dishes[$j];
+                        if (in_array($dish['id'], $used_dishes) || $dish['id_meal'] != $meal_id) {
+                            continue;
+                        }
+                        
+                        // Считаем вес порции на основе калорий
+                        $portion = ($target_cal / $dish['calories']) * 100;
+                        
+                        // Если вес порции адекватный, проверяем БЖУ, которые человек получит с ЭТОЙ порцией
+                        if ($portion >= 150 && $portion <= 300) {
+                            $p_in_portion = ($dish['proteins'] * $portion) / 100;
+                            $f_in_portion = ($dish['fats'] * $portion) / 100;
+                            $c_in_portion = ($dish['carbohydrates'] * $portion) / 100;
+                            
+                            // Допустимая погрешность (например, не более 7 грамм отклонения по каждому нутриенту)
+                            $limit = 7; 
+                            
+                            if (abs($p_in_portion - $target_prot) <= $limit &&
+                                abs($f_in_portion - $target_fat) <= $limit &&
+                                abs($c_in_portion - $target_carb) <= $limit) {
+                                
+                                return ['name' => $dish['dish'], 'id' => $dish['id'], 'portion' => $portion];
+                            }
+                        }
+                    }
+                    return null;
+                }
+
+                // 3. Вывод меню на неделю
+                for ($w = 0; $w < 7; $w++) {
+                    print('<b>' .$week[$w] . '</b> <br>');
+                    for ($i = 0; $i < 4; $i++) {
+                        $current_cal = $meal_calories[$i];
+                        $current_prot = $meal_proteins[$i];
+                        $current_fat = $meal_fats[$i];
+                        $current_carb = $meal_carbohydrates[$i];
+                        $current_meal_id = $meal_id[$i];
+
+                        // Передаем все параметры в функцию поиска
+                        $found = find_dish($all_dishes, $current_cal, $current_prot, $current_fat, $current_carb, $used_dishes, $current_meal_id);
+
+                        print($meal_names[$i] . "<br>");
+                        print("Цель: Ккал=" . round($current_cal) . " | Б=" . round($current_prot) . "г | Ж=" . round($current_fat) . "г | У=" . round($current_carb) . "г<br>");
+                        
+                        if ($found) {
+                            $used_dishes[] = $found['id'];
+                            print("Блюдо: " . $found['name'] . "<br>");
+                            print("Порция: " . round($found['portion']) . " г<br>");
+                        } else {
+                            // Если точного совпадения нет — подбираем случайное с мягкими границами БЖУ
+                            $flag = false;
+                            $attempts = 0;
+                            while (!$flag && $attempts < 1000) {
+                                $attempts++;
+                                $rand_index = array_rand($random_dishes);
+                                $rand_dish = $random_dishes[$rand_index];
+                                
+                                $portion = ($current_cal / $rand_dish['calories']) * 100;
+                                
+                                if ($portion >= 150 && $portion <= 250) {
+                                    $p_in_portion = ($rand_dish['proteins'] * $portion) / 100;
+                                    $f_in_portion = ($rand_dish['fats'] * $portion) / 100;
+                                    $c_in_portion = ($rand_dish['carbohydrates'] * $portion) / 100;
+                                    
+                                    // Для рандома делаем диапазон шире (погрешность до 12 грамм)
+                                    $rand_limit = 12;
+                                    
+                                    if (abs($p_in_portion - $current_prot) <= $rand_limit &&
+                                        abs($f_in_portion - $current_fat) <= $rand_limit &&
+                                        abs($c_in_portion - $current_carb) <= $rand_limit) {
+                                        $flag = true;
+                                        print("** Блюдо: " . $rand_dish['dish'] . "<br>");
+                                        print("Порция: " . round($portion) . " г<br>");
+                                    }
+                                }
+                            }
+                            
+                            // Аварийный выход: если база пустая или ничего не подошло, берем просто по калориям
+                            if (!$flag) {
+                                $rand_index = array_rand($random_dishes);
+                                $rand_dish = $random_dishes[$rand_index];
+                                $portion = ($current_cal / $rand_dish['calories']) * 100;
+                                print("* Блюдо (только ккал): " . $rand_dish['dish'] . "<br>");
+                                print("Порция: " . round($portion) . " г<br>");
+                            }
+                        }
+                        print("<br>");
+                    }
+                    print('<hr style="border-top: 1px solid #0e0b0b">');
+                }
+------------
+
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Формирование недельного рациона питания FoodPlan</title>
+    </head>
+
+    <body>
+        <form method="get" action="">
+            <label class="label" for="full_name">ФИО</label>
+            <input class="area" type="text" id="full_name" name="full_name" required>
+            <br>
+            <label><input type="radio" name="gender" value="жен" required> жен </label>
+            <label><input type="radio" name="gender" value="муж" required> муж </label>
+            <br>
+            <label class="label" for="age">Возраст</label>
+            <input class="area" type="number" id="age" name="age" min="1" max="110" required>
+            <br>
+            <label class="label" for="weight">Вес</label>
+            <input class="area" type="number" id="weight" name="weight" min="1" max="220" required>
+            <br>
+            <label class="label" for="height">Рост</label>
+            <input class="area" type="number" id="height" name="height" min="1" max="250" required>
+            <br>
+            <label class="label" for="physical_activity_level">Уровень физической активности</label>
+            <select class="area" name="physical_activity_level" id="physical_activity_level">
+                <option value="1">1 - очень мало движения (сидячий образ жизни)</option>
+                <option value="2">2 - легкая активность (тренировки 1–2 раза в неделю)</option>
+                <option value="3">3 - умеренная активность (тренировки 3–4 раза в неделю)</option>
+                <option value="4">4 - высокая активность (тренировки почти каждый день)</option>
+                <option value="5">5 - экстремальная активность (тяжелая физическая работа/тяжелые тренировки)</option>
+            </select>
+            <br>
+            <p></p>
+            <input class="" name="btn_calc" type="submit" value="Рассчитать">
+            <p></p>
+        </form>
+
+    <?php
+        if (isset($_GET['btn_calc'])) {
+            $con = pg_connect('host=localhost port=5432 dbname=FoodPlan user=postgres password=123456');
+            if (!$con) {
+                die("Ошибка подключения к БД");
+            }
+
+            $full_name = htmlspecialchars(trim($_GET['full_name']));
+            $gender = trim($_GET['gender']);
+            $age = intval($_GET['age']);
+            $weight = floatval($_GET['weight']);
+            $height = floatval($_GET['height']);
+            $physical_activity_level = intval($_GET['physical_activity_level']);
+
+            if ($weight > 0 && $height > 0) {
+                $calories = 0;
+                $proteins = 0;
+                
+                // Формула Миффлина-Сен Жеора
+                if ($gender == 'жен') {
+                    $calories = 10 * $weight + 6.25 * $height - 5 * $age - 161;
+                } elseif ($gender == 'муж') {
+                    $calories = 10 * $weight + 6.25 * $height - 5 * $age + 5;
+                }
+
+                switch ($physical_activity_level) {
+                    case 1: $calories *= 1.2;   $proteins = $weight * 1.4; break;
+                    case 2: $calories *= 1.375; $proteins = $weight * 1.6; break;
+                    case 3: $calories *= 1.55;  $proteins = $weight * 1.8; break;
+                    case 4: $calories *= 1.725; $proteins = $weight * 2;   break;
+                    case 5: $calories *= 1.9;   $proteins = $weight * 2.2; break;
+                }
+
+                $fats = (0.3 * $calories) / 9;
+                $carbohydrates = (0.4 * $calories) / 4;
+
+                print("Рацион для: <b>" . $full_name . "</b><br>");
+                print("Итого суточная норма:<br>");
+                print("ккал = " . round($calories) . "<br>");
+                print("б = " . round($proteins) . "<br>");
+                print("ж = " . round($fats) . "<br>");
+                print("у = " . round($carbohydrates) . "<br><br>");
+                print('<hr style="border-top: 1px solid #f10101">');
+
+                $week = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
+                $meal_names = ['Завтрак', 'Обед', 'Перекус', 'Ужин'];
+                $meal_id =;
+                $meal_calories = [$calories * 0.25, $calories * 0.30, $calories * 0.15, $calories * 0.30];
+                $meal_proteins = [$proteins * 0.25, $proteins * 0.30, $proteins * 0.15, $proteins * 0.30];
+                $meal_fats = [$fats * 0.25, $fats * 0.30, $fats * 0.15, $fats * 0.30];
+                $meal_carbohydrates = [$carbohydrates * 0.25, $carbohydrates * 0.30, $carbohydrates * 0.15, $carbohydrates * 0.30];
+
+                $sql = "SELECT dishes.id, dish, calories, proteins, fats, carbohydrates, id_meal
+                        FROM dishes JOIN dishes_meal ON dishes.id = dishes_meal.id_dish";
+                $result = pg_query($con, $sql);
+                
+                $all_dishes = [];
+                while ($row = pg_fetch_assoc($result)) {
+                    $all_dishes[] = $row;
+                }
+
+                if (empty($all_dishes)) {
+                    die("В базе данных нет блюд для составления рациона.");
+                }
+
+                // Перемешиваем список для разнообразия рационов
+                shuffle($all_dishes);
+                $used_dishes = [];
+
+                function find_dish($dishes, $t_cal, $t_prot, $t_fats, $t_carb, $used_dishes, $meal_id) {
+                    $dishes_count = count($dishes);
+                    for ($j = 0; $j < $dishes_count; $j++) {
+                        $dish = $dishes[$j];
+                        
+                        if ($dish['calories'] <= 0 || in_array($dish['id'], $used_dishes)) {
+                            continue;
+                        }
+                        if ($meal_id !== null && $dish['id_meal'] != $meal_id) {
+                            continue;
+                        }
+
+                        $portion = ($t_cal / $dish['calories']) * 100;
+
+                        if ($portion >= 150 && $portion <= 300) {
+                            $p_in_portion = ($dish['proteins'] * $portion) / 100;
+                            $f_in_portion = ($dish['fats'] * $portion) / 100;
+                            $c_in_portion = ($dish['carbohydrates'] * $portion) / 100;
+                            
+                            if (abs($p_in_portion - $t_prot) <= 7 && 
+                                abs($f_in_portion - $t_fats) <= 7 && 
+                                abs($c_in_portion - $t_carb) <= 7) {
+                                return ['name' => $dish['dish'], 'id' => $dish['id'], 'portion' => $portion];
+                            }
+                        }
+                    }
+                    return null;
+                }
+
+                for ($w = 0; $w < 7; $w++) {
+                    print('<b>' . $week[$w] . '</b> <br>');
+                    for ($i = 0; $i < 4; $i++) {
+                        $c_cal = $meal_calories[$i];
+                        $c_prot = $meal_proteins[$i];
+                        $c_fats = $meal_fats[$i];
+                        $c_carb = $meal_carbohydrates[$i];
+                        $current_meal_id = $meal_id[$i];
+
+                        print($meal_names[$i] . "<br>");
+                        print("Цел ккал: " . round($c_cal) . " | Цел б: " . round($c_prot) . " | Цел ж: " . round($c_fats) . " | Цел у: " . round($c_carb) . "<br>");
+
+                        // 1. Ищем с учетом приема пищи
+                        $found = find_dish($all_dishes, $c_cal, $c_prot, $c_fats, $c_carb, $used_dishes, $current_meal_id);
+
+                        if ($found) {
+                            $used_dishes[] = $found['id'];
+                            print("Блюдо: " . $found['name'] . "<br>");
+                            print("Порция: " . round($found['portion']) . " г<br>");
+                        } else {
+                            // 2. Ищем среди всех блюд по БЖУ без привязки к приему пищи (передаем null)
+                            $found_any = find_dish($all_dishes, $c_cal, $c_prot, $c_fats, $c_carb, $used_dishes, null);
+
+                            if ($found_any) {
+                                $used_dishes[] = $found_any['id'];
+                                print("* Блюдо: " . $found_any['name'] . "<br>");
+                                print("Порция: " . round($found_any['portion']) . " г<br>");
+                            } else {
+                                // 3. Запасной вариант: берем случайное блюдо и считаем порцию только по калориям
+                                $rand_dish = null;
+                                for ($k = 0; $k < 20; $k++) {
+                                    $candidate = $all_dishes[array_rand($all_dishes)];
+                                    if ($candidate['calories'] > 0) {
+                                        $rand_dish = $candidate;
+                                        break;
+                                    }
+                                }
+                                
+                                if ($rand_dish) {
+                                    $portion = ($c_cal / $rand_dish['calories']) * 100;
+                                    print("** Блюдо (только ккал): " . $rand_dish['dish'] . "<br>");
+                                    print("Порция: " . round($portion) . " г<br>");
+                                } else {
+                                    print("Подходящее блюдо не найдено.<br>");
+                                }
+                            }
+                        }
+                        print("<br>");
+                    }
+                    print('<hr style="border-top: 1px solid #0e0b0b">');
+                }
+                
+                // Кнопка сохранения появляется только после расчета рациона
+                print('<form method="post" action="">');
