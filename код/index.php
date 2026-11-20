@@ -3,6 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="bootstrap-5.3.9-dist/css/bootstrap.min.css">
         <title>Формирование недельного рациона питания FoodPlan</title>
     </head>
 
@@ -33,7 +34,9 @@
             </select>
             <br>
             <p></p>
-            <input class="" name='btn' type='submit' value='Рассчитать'>
+
+            <!-- <input class="" name='btn' type='submit' value='Рассчитать'> -->
+            <button type="submit" class="btn btn-warning" name="btn">Рассчитать</button>
             <p></p>
         </form>
 
@@ -67,12 +70,12 @@
                 }
 
                 $fats = (0.3 * $calories) / 9;
-                $carbohydrates = (0.4 * $calories) / 4;
+                $carbohydrates = (0.45 * $calories) / 4;
 
                 //имт, добавить в регистрацию чтобы прога просто не регистрировала нездоровых людей
                 //предожирение считается, ожирение 1,2,3 степени уже нет
                 $imt = $weight / ($height*$height) * 10000;
-                print("Индекс массы тема = " . round($imt,3) . "<br>");
+                print("Индекс массы тела = " . round($imt,3) . "<br>");
                 //
                 if ($imt >= 30) {
                     print("Индекс массы тема превышает норму. Невозвожно сформировать меню (программа расчитана для здорового человека)");

@@ -4,62 +4,76 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Регистрация</title>
-        <!-- <link rel="stylesheet" href="style.css"> -->
+        <link rel="stylesheet" href="bootstrap-5.3.9-dist/css/bootstrap.min.css">
     </head>
     
-    <body>
-        <h1>Регистрация нового пользователя</h1>
+    <body class="container mt-4">
+        <h1 class="text-center">Регистрация нового пользователя</h1>
 
         <form method="get" action="">
-            <label class="label" for="login">Логин</label>
-            <input class="area" type="text" name="login" required> <br>
-
-            <label class="label" for="password">Пароль</label>
-            <input class="area" type="text" name="password" required> <br>
-            <p></p>
-
-
-            <label class="label" for="full_name">ФИО</label>
-            <input class="area" type="text" name="full_name" required> <br>
-
-            <label><input type="radio" name="gender" value="жен"> жен </label>
-            <label><input type="radio" name="gender" value="муж"> муж </label> <br>
-
-            <label class="label" for="age">Возраст</label>
-            <input class="area" type="number" name="age" min="1" max="110" > <br>
-
-            <label class="label" for="weight">Вес</label>
-            <input class="area" type="number" name="weight" min="1" max="220"> <br>
-
-            <label class="label" for="height">Рост</label>
-            <input class="area" type="number" name="height" min="1" max="250"> <br>
-
+            <div class="mb-3">
+                <label for="login" class="form-label">Логин</label>
+                <input type="text" class="form-control" id="login" name="login" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Пароль</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <div class="mb-3">
+                <label for="full_name" class="form-label">ФИО</label>
+                <input type="text" class="form-control" id="full_name" name="full_name">
+            </div>
             
-            <label class="label" for="physical_activity_level">Уровень физической активности</label>
-            <select class="area" name="physical_activity_level" id="physical_activity_level">
-                <option value="1">1 - очень мало движения (сидячий образ жизни)</option>
-                <option value="2">2 - легкая активность (тренировки 1–2 раза в неделю)</option>
-                <option value="3">3 - умеренная активность (тренировки 3–4 раза в неделю)</option>
-                <option value="4">4 - высокая активность (тренировки почти каждый день)</option>
-                <option value="5">5 - экстремальная активность (тяжелая физическая работа/тяжелые тренировки)</option>
-            </select>
-            <br>
-            <p></p>
-            <input class="btn_dob" name='btn' type='submit' value='Зарегистрироваться'>    
+            <div class="mb-3">
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="gender" id="gender1" value="жен" checked>
+                    <label class="form-check-label" for="gender1">Жен</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="gender" id="gender2" value="муж">
+                    <label class="form-check-label" for="gender2">Муж</label>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="age" class="form-label">Возраст</label>
+                <input type="number" class="form-control" id="age" name="age">
+            </div>
+            <div class="mb-3">
+                <label for="weight" class="form-label">Вес</label>
+                <input type="number" class="form-control" id="weight" name="weight">
+            </div>
+            <div class="mb-3">
+                <label for="height" class="form-label">Рост</label>
+                <input type="number" class="form-control" id="height" name="height">
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label" for="physical_activity_level">Уровень физической активности</label>
+                <select class="form-select" name="physical_activity_level" id="physical_activity_level">
+                    <option value="1">1 - очень мало движения (сидячий образ жизни)</option>
+                    <option value="2">2 - легкая активность (тренировки 1–2 раза в неделю)</option>
+                    <option value="3">3 - умеренная активность (тренировки 3–4 раза в неделю)</option>
+                    <option value="4">4 - высокая активность (тренировки почти каждый день)</option>
+                    <option value="5">5 - экстремальная активность (тяжелая физическая работа/тяжелые тренировки)</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-success d-block mx-auto" name="btn">Зарегистрироваться</button>
         </form>
 
         <?php
             $con = pg_connect('host=localhost port=5432 dbname=FoodPlan user=postgres password=123456');
             
             if (isset($_GET['btn'])) {
-                $login = trim($_GET['login']);
-                $password = trim($_GET['password']);
-                $full_name = trim($_GET['full_name']);
-                $gender = trim($_GET['gender']);
-                $age = trim($_GET['age']);
-                $weight = trim($_GET['weight']);
-                $height = trim($_GET['height']);
-                $physical_activity_level = trim($_GET['physical_activity_level']);
+                $login = trim($_GET['login'] ?? '');
+                $password = trim($_GET['password'] ?? '');
+                $full_name = trim($_GET['full_name'] ?? '');
+                $gender = trim($_GET['gender'] ?? '');
+                $age = trim($_GET['age'] ?? '');
+                $weight = trim($_GET['weight'] ?? '');
+                $height = trim($_GET['height'] ?? '');
+                $physical_activity_level = trim($_GET['physical_activity_level'] ?? '');
             
                 if ($login != '' && $password != '') {
                     $sql = "INSERT INTO users (login, password, full_name, gender, age, weight, height, physical_activity_level) 
@@ -67,8 +81,12 @@
                     $result = pg_query($con, $sql);
     
                     if ($result) {
-                        print "<p>👍</p>";
+                        print "<p class='text-center mt-3 text-success'>Пользователь зарегистрирован!</p>";
                     }
+                    else {
+                        print "<p class='text-center mt-3 text-danger'>Ошибка при регистрации</p>";
+                    }
+
                 }
             }
             pg_close($con);
